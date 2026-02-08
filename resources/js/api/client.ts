@@ -1,5 +1,16 @@
 import axios from 'axios'
 
+let getToken: (() => string | null) | null = null
+let onUnauthorized: (() => void) | null = null
+
+export function setAuthHandlers(
+  tokenGetter: () => string | null,
+  unauthorizedCallback: () => void
+) {
+  getToken = tokenGetter
+  onUnauthorized = unauthorizedCallback
+}
+
 const api = axios.create({
   baseURL: '/api',
   headers: {
@@ -9,7 +20,7 @@ const api = axios.create({
 })
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token')
+  const token = getToken?.() ?? null
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
@@ -19,10 +30,8 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      window.location.href = '/login'
+    if (error.response?.status === 401 && onUnauthorized) {
+      onUnauthorized()
     }
     return Promise.reject(error)
   }

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import LoginPage from '@/views/LoginPage.vue'
 import TasksPage from '@/views/TasksPage.vue'
 import StatsPage from '@/views/StatsPage.vue'
+import { useUserStore } from '@/stores/user'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -13,11 +14,12 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  const token = localStorage.getItem('token')
-  if (to.meta.requiresAuth && !token) {
+  const userStore = useUserStore()
+  const hasAuth = userStore.isAuthenticated()
+  if (to.meta.requiresAuth && !hasAuth) {
     return { name: 'login' }
   }
-  if (to.meta.guest && token) {
+  if (to.meta.guest && hasAuth) {
     return { name: 'tasks' }
   }
 })

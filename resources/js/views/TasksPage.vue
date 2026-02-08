@@ -1,17 +1,6 @@
 <template>
   <div class="min-h-screen bg-slate-100">
-    <nav class="bg-white shadow p-4 flex justify-between items-center">
-      <div class="flex gap-4">
-        <router-link to="/" class="text-blue-600 font-medium">Tasks</router-link>
-        <router-link to="/stats" class="text-slate-600 hover:text-slate-900">Stats</router-link>
-      </div>
-      <button
-        @click="handleLogout"
-        class="text-slate-600 hover:text-slate-900"
-      >
-        Logout
-      </button>
-    </nav>
+    <AppNavBar />
     <main class="max-w-2xl mx-auto p-6">
       <h1 class="text-2xl font-bold mb-6">Tasks</h1>
 
@@ -39,7 +28,7 @@
 
       <ul class="space-y-2">
         <li
-          v-for="task in tasks"
+          v-for="task in tasksStore.tasks"
           :key="task.id"
           class="flex items-center gap-4 p-4 bg-white rounded shadow"
         >
@@ -61,28 +50,46 @@
           </button>
         </li>
       </ul>
+
+      <div
+        v-if="tasksStore.meta && tasksStore.meta.last_page > 1"
+        class="mt-6 flex items-center justify-between"
+      >
+        <p class="text-sm text-slate-600">
+          Показано {{ tasksStore.meta.from }}–{{ tasksStore.meta.to }} из {{ tasksStore.meta.total }}
+        </p>
+        <div class="flex gap-2">
+          <button
+            :disabled="!tasksStore.meta || tasksStore.meta.current_page <= 1"
+            @click="tasksStore.goToPage(tasksStore.meta!.current_page - 1)"
+            class="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-100"
+          >
+            Назад
+          </button>
+          <button
+            :disabled="!tasksStore.meta || tasksStore.meta.current_page >= tasksStore.meta.last_page"
+            @click="tasksStore.goToPage(tasksStore.meta!.current_page + 1)"
+            class="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-100"
+          >
+            Вперёд
+          </button>
+        </div>
+      </div>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { tasksApi } from '@/api/tasks'
-import { authApi } from '@/api/auth'
 import { catFactApi } from '@/api/catFact'
-import type { Task, CatFact } from '@/types'
-import { useRouter } from 'vue-router'
+import { useTasksStore } from '@/stores/tasks'
+import AppNavBar from '@/components/AppNavBar.vue'
+import type { CatFact, Task } from '@/types'
 
-const router = useRouter()
-const tasks = ref<Task[]>([])
+const tasksStore = useTasksStore()
 const newTitle = ref('')
 const newStatus = ref('new')
 const catFact = ref<CatFact | null>(null)
-
-async function loadTasks() {
-  const { data } = await tasksApi.list()
-  tasks.value = data.data ?? []
-}
 
 async function loadCatFact() {
   try {
@@ -95,31 +102,21 @@ async function loadCatFact() {
 
 async function handleCreate() {
   if (!newTitle.value.trim()) return
-  await tasksApi.create({ title: newTitle.value.trim(), status: newStatus.value })
+  await tasksStore.createTask(newTitle.value.trim(), newStatus.value)
   newTitle.value = ''
   newStatus.value = 'new'
-  await loadTasks()
 }
 
 async function handleStatusChange(task: Task, status: string) {
-  await tasksApi.update(task.id, { status })
-  task.status = status
+  await tasksStore.updateTask(task, status)
 }
 
 async function handleDelete(id: number) {
-  await tasksApi.delete(id)
-  tasks.value = tasks.value.filter((t) => t.id !== id)
-}
-
-async function handleLogout() {
-  await authApi.logout()
-  localStorage.removeItem('token')
-  localStorage.removeItem('user')
-  router.push('/login')
+  await tasksStore.deleteTask(id)
 }
 
 onMounted(() => {
-  loadTasks()
+  tasksStore.loadTasks()
   loadCatFact()
 })
 </script>

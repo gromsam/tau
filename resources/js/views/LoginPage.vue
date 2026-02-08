@@ -37,9 +37,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { authApi } from '@/api/auth'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
+const userStore = useUserStore()
 const email = ref('')
 const password = ref('')
 const error = ref('')
@@ -49,9 +50,7 @@ async function handleLogin() {
   error.value = ''
   loading.value = true
   try {
-    const { data } = await authApi.login(email.value, password.value)
-    localStorage.setItem('token', data.token)
-    localStorage.setItem('user', JSON.stringify(data.user))
+    await userStore.login(email.value, password.value)
     router.push('/')
   } catch (e: unknown) {
     const err = e as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } }
