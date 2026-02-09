@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { authApi } from '@/api/auth'
 import { getAuthToken, removeAuthToken, setAuthToken } from '@/utils/cookie'
 import type { User } from '@/types'
+import { AxiosResponse } from "axios";
 
 export const useUserStore = defineStore('user', () => {
   const token = ref<string | null>(getAuthToken())
@@ -28,8 +29,8 @@ export const useUserStore = defineStore('user', () => {
   async function loadUser() {
     if (!token.value) return
     try {
-      const { data } = await authApi.user()
-      setUser(data)
+        const response: AxiosResponse = await authApi.user()
+        setUser(response.data)
     } catch {
       setUser(null)
     }
