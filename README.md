@@ -45,17 +45,22 @@ php artisan key:generate
 ```
 
 ## Docker
-в
-*Запуск*
+*Запуск и сборка*
 
 ```bash
-docker compose up -d --build
+    docker compose up -d --build
 
 # Создать БД и выполнить миграции
 docker exec tau-app php artisan migrate:fresh --seed
 ```
 
-Остановка: `docker compose down`.
+Откройте проект по ссылке
+http://localhost:8080
+
+Остановка:
+```bash
+    docker compose down
+```
 
 Сервисы:
 - **nginx** — http://localhost:8080
