@@ -48,8 +48,10 @@ php artisan key:generate
 *Запуск и сборка*
 
 ```bash
-    docker compose up -d --build
+docker compose up -d --build
+```
 
+```bash
 # Создать БД и выполнить миграции
 docker exec tau-app php artisan migrate:fresh --seed
 ```
@@ -59,17 +61,8 @@ http://localhost:8080
 
 Остановка:
 ```bash
-    docker compose down
+docker compose down
 ```
-
-Сервисы:
-- **nginx** — http://localhost:8080
-- **php** — PHP-FPM, код монтируется как `.:/var/www`
-- **postgres** — порт 5432
-- **redis** — порт 6379
-- **node** — Vite dev на порту 5173
-
-Переменные в `docker-compose.yml` (DB_HOST=postgres, REDIS_HOST=redis).
 
 ## API
 
