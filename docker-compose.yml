@@ -1,94 +1,31 @@
+version: "3.9"
+
 services:
-  php:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: tau-php
-    restart: unless-stopped
-    working_dir: /var/www
-    environment:
-      APP_ENV: local
-      APP_DEBUG: "true"
-      APP_URL: "http://localhost:8080"
-      DB_CONNECTION: pgsql
-      DB_HOST: postgres
-      DB_PORT: "5432"
-      DB_DATABASE: tau
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
-      REDIS_HOST: redis
-      REDIS_PORT: "6379"
-      CACHE_STORE: redis
+  app:
+    build: .
+    container_name: tau-app
     volumes:
       - .:/var/www
-      - storage_data:/var/www/storage
-      - cache_data:/var/www/bootstrap/cache
-    networks:
-      - tau
     depends_on:
-      - postgres
+      - db
       - redis
 
   nginx:
     image: nginx:alpine
-    container_name: tau-nginx
-    restart: unless-stopped
     ports:
       - "8080:80"
     volumes:
       - .:/var/www
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
-    networks:
-      - tau
     depends_on:
-      - php
+      - app
 
-  postgres:
+  db:
     image: postgres:16-alpine
-    container_name: tau-postgres
-    restart: unless-stopped
     environment:
       POSTGRES_DB: tau
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - tau
 
   redis:
     image: redis:7-alpine
-    container_name: tau-redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    networks:
-      - tau
-
-  node:
-    build:
-      context: .
-      dockerfile: docker/node/Dockerfile
-    container_name: tau-node
-    restart: unless-stopped
-    working_dir: /var/www
-    volumes:
-      - .:/var/www
-      - node_modules:/var/www/node_modules
-    ports:
-      - "5173:5173"
-    command: npm run dev
-    networks:
-      - tau
-
-networks:
-  tau:
-    driver: bridge
-
-volumes:
-  postgres_data:
-  node_modules:
-  storage_data:
-  cache_data:
